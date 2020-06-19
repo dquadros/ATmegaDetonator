@@ -1,10 +1,10 @@
 /*
-    DefiniÁıes globais para o ATmegaDetonator
+    Defini√ß√µes globais para o ATmegaDetonator
     
     (C) 2020, Daniel Quadros
 */
 
-// Conexıes ao ATmega que ser· gravado
+// Conex√µes ao ATmega que ser√° gravado
 const int pinVcc = 2;
 const int pin12V = 3;
 const int pinOE = 4;
@@ -23,3 +23,6 @@ const int pinEncoder1 = A0;
 const int pinEncoder2 = A1; 
 const int pinDetona = A2;
 
+// Endere√ßo do PF8574A
+// (para PCF7584 usar 0x20)
+const byte PCF8574_Addr = 0x38;

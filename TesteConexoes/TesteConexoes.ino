@@ -1,4 +1,5 @@
 #include "ATmegaDetonator.h"
+#include <Wire.h>
 
 /*
  * ATmegaDetonator
@@ -32,6 +33,8 @@ void setup() {
     digitalWrite(conexoes[i].pino, LOW);
     i++;
   }
+  Wire.begin();
+  PCF8574_Write(0);
   Serial.begin(115200);
   Serial.println();
   Serial.println("Testando!");
@@ -40,14 +43,38 @@ void setup() {
 // Aciona cada um dos pinos por 5 segundos
 void loop() {
   static int i = 0;
+  static int j = 0;
 
+  if (conexoes[i].pino == 0) {
+    if (j == 8) {
+      PCF8574_Write(0);
+      i = j = 0;
+    } else {
+      PCF8574_Write(1 << j);
+      Serial.print("D");
+      Serial.print(j);
+      Serial.print("\n");
+      espera();
+      j++;
+      return;
+    }
+  }
   Serial.print(conexoes[i].nome);
   digitalWrite(conexoes[i].pino, HIGH);
-  delay (5000);
+  espera();
   digitalWrite(conexoes[i].pino, LOW);
-  Serial.print("\r");
+  Serial.print("\n");
   i++;
-  if (conexoes[i].pino == 0) {
-    i = 0;
+}
+
+void espera() {
+  while (Serial.read() < 0) {
+    delay (100);
   }
+}
+
+void PCF8574_Write(byte dado) {
+  Wire.beginTransmission(PCF8574_Addr);
+  Wire.write(dado);
+  Wire.endTransmission();
 }
