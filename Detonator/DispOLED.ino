@@ -1,7 +1,7 @@
 /*
  * ATmegaDetonator - Escrita no display OLED
  * 
- * (C) 2020, Daniel Quadros
+ * (C) 2020-2021, Daniel Quadros
  */
 
 // Comandos
@@ -224,7 +224,6 @@ void Display_clearline (byte l) {
 }
 
 // Escreve um valor hexa a partir da linha l(0 a 3), coluna c(0 a 15)
-const PROGMEM uint8_t hexa[] = "0123456789ABCDEF";
 void Display_writehex (byte l, byte c, byte valor) {
   Display_write (l, c, pgm_read_byte(&hexa[valor >> 4]), VID_NORMAL);
   Display_write (l, c+1, pgm_read_byte(&hexa[valor & 0x0F]), VID_NORMAL);

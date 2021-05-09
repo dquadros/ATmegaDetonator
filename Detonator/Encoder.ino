@@ -1,7 +1,7 @@
 /*
  * ATmegaDetonator - Tratamento do Enconder
  * 
- * (C) 2020, Daniel Quadros
+ * (C) 2020-2021, Daniel Quadros
  */
 
 // Fila da ações lidas do Rotary Encoder
@@ -126,4 +126,17 @@ void aguardaEnter() {
   while (tiraFilaEnc() != ENTER) {
     delay(100);
   }
+}
+
+/*
+ * Aguarda confirmação através do botão Detona
+ */
+bool confirmaDetona() {
+  Encoder_start();
+  AcaoEnc acao;
+  while ((acao = tiraFilaEnc()) == NADA) {
+    delay (100);
+  }
+  Encoder_stop();
+  return acao == DETONA;  
 }

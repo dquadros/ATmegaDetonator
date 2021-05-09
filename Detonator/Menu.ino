@@ -1,7 +1,7 @@
 /*
  * ATmegaDetonator - Seleção por Menu
  * 
- * (C) 2020, Daniel Quadros
+ * (C) 2020-2021, Daniel Quadros
  */
 
 const int nlinMenu = 3;
@@ -31,7 +31,7 @@ int leMenu (MENU *menu) {
         }
         // Redesenha o menu
         if (topo != old_topo) {
-          for (int i = 0; i < nlinMenu; i++) {
+          for (int i = 0; i < n; i++) {
             int opc = topo+i;
             Display_clearline (i+1);
             if (opc == sel) {

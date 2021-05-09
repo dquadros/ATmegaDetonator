@@ -1,0 +1,54 @@
+{
+    "chips": [
+      {
+        "nome": "ATmega328P",
+        "id": "1E950F",
+        "fusesFab": "62D9FFFF",
+        "pageSize": 64,
+        "numPages": 256,
+        "bootloaders": [ "Ard328", "Meta328" ]
+      },
+      {
+        "nome": "ATmega328",
+        "id": "1E9514",
+        "fusesFab": "62D9FFFF",
+        "pageSize": 64,
+        "numPages": 256,
+        "bootloaders": [ "Ard328", "Meta328" ]
+      },
+      {
+        "nome": "ATmega168",
+        "id": "1E9406",
+        "fusesFab": "62DFF9FF",
+        "pageSize": 64,
+        "numPages": 128,
+        "bootloaders": [ "Ard168" ]
+      }
+    ],
+    "bootloaders": [
+      {
+          "id": "Ard328",
+          "nome": "Arduino",
+          "fuses": "FFDEFDCF",
+          "addrBoot": "7E00",
+          "tamanho": 512,
+          "code": "optiboot_atmega328.hex"
+      },
+      {
+          "id": "Ard168",
+          "nome": "Arduino",
+          "fuses": "FFDDF8CF",
+          "addrBoot": "3E00",
+          "tamanho": 512,
+          "code": "optiboot_atmega168.hex"
+      },
+      {
+          "id": "Meta328",
+          "nome": "Metaboard",
+          "fuses": "FFDEFDCF",
+          "addrBoot": "7800",
+          "tamanho": 2048,
+          "code": "metaboard328.hex"
+      }
+    ]
+}

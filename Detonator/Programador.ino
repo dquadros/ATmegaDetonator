@@ -1,7 +1,7 @@
 /*
  * ATmegaDetonator - Programação do ATmega
  * 
- * (C) 2020, Daniel Quadros
+ * (C) 2020-2021, Daniel Quadros
  */
 
 // pinos de saída
@@ -15,6 +15,7 @@ const int pinOut[] = {
 const byte CMD_LEID = 0x08;
 const byte CMD_LEFUSES = 0x04;
 const byte CMD_GRAVAFUSES = 0x40;
+const byte CMD_GRAVALOCK = 0x20;
 const byte CMD_APAGA = 0x80;
 const byte CMD_NOP = 0x00;
 const byte CMD_LEFLASH = 0x02;
@@ -139,12 +140,126 @@ bool ATmega_CheckClean(ATMEGA_CHIP *chip) {
   return limpa;  
 }
 
+// Grava dados da EEProm na Flash
+void ATmega_Grava(uint16_t addrFlash, uint16_t addrEEProm, uint16_t tam, uint8_t pageSize) {
+  Serial.print("Gravando ");
+  Serial.print(addrFlash, HEX);
+  Serial.print(" ");
+  Serial.println(tam, HEX);
+  addrFlash = addrFlash >> 1;   // converte para endereço de words
+  // Envia o comando
+  ATmega_SendCmd(CMD_GRAVAFLASH);
+  // Loop por página
+  uint16_t nGrv = 0;
+  while (nGrv < tam) {
+    Serial.print ("Gravando a pagina ");
+    Serial.println (addrFlash >> 6, HEX);
+    // Envia a parte alta do endereço
+    ATmega_SendAddr(HIGH, (byte) (addrFlash >> 8));
+    // Preenche o buffer da página
+    for (byte cont = 0; cont < pageSize; cont++) {
+      // Enviar o byte menos significativo do endereço e 
+      // os dois bytes da palavra
+      ATmega_SendAddr(LOW, (byte) addrFlash);
+      digitalWrite (pinXA0, HIGH);
+      digitalWrite (pinXA1, LOW);
+      digitalWrite (pinBS1, LOW);
+      PCF8574_Write(leEEProm(addrEEProm++));
+      pulsaXTAL1();
+      digitalWrite (pinBS1, HIGH);
+      PCF8574_Write(leEEProm(addrEEProm++));
+      pulsaXTAL1();
+      // Pulsa PAGEL para colocar a palavra no buffer
+      digitalWrite (pinPAGEL, HIGH);
+      delayMicroseconds(1);
+      digitalWrite (pinPAGEL, LOW);
+      addrFlash++;
+      nGrv += 2;
+    }
+    // Dispara a gravação
+    digitalWrite (pinWR, LOW);
+    delayMicroseconds(1);
+    digitalWrite (pinWR, HIGH);
+    delayMicroseconds(1);
+    // Aguarda o fim da gravação
+    while (digitalRead(pinRdy) == LOW) {
+      delay(10);
+    }
+  }
+  // Finaliza a programação
+  ATmega_SendCmd(CMD_NOP);
+  Serial.println("Gravado.");
+}
+
+// Confere o que foi gravado na Flash
+bool ATmega_Verifica(uint16_t addrFlash, uint16_t addrEEProm, uint16_t tam) {  
+  int erros = 0;
+  Serial.println("Conferindo...");
+  addrFlash = addrFlash >> 1;   // converte para endereço de words
+  // Envia o comando
+  ATmega_SendCmd(CMD_LEFLASH);
+  // Repete para todas as páginas
+  byte valor;
+  byte dado;
+  uint16_t nLido = 0;
+  while (nLido < tam) {
+    // Seleciona a parte alta do endereço
+    ATmega_SendAddr(HIGH, (byte) (addrFlash >> 8));
+    for (int cont = 0; cont < 256; cont++) {
+      // Enviar a parte baixa do endereço e ler os dois bytes da palavra
+      ATmega_SendAddr(LOW, (byte) addrFlash);
+      PCF8574_Release();
+      delayMicroseconds(1);
+      digitalWrite (pinBS1, LOW);
+      digitalWrite (pinOE, LOW);
+      delayMicroseconds(1);
+      dado = PCF8574_Read();
+      valor = leEEProm(addrEEProm++);
+      if (dado != valor) {
+        erros++;
+        Serial.print ("ERRO: ");
+        Serial.print (addrFlash, HEX);
+        Serial.print (": ");
+        Serial.print (dado, HEX);
+        Serial.print (" x ");
+        Serial.println (valor, HEX);
+      }
+      digitalWrite (pinBS1, HIGH);
+      delayMicroseconds(1);
+      dado = PCF8574_Read();
+      valor = leEEProm(addrEEProm++);
+      if (dado != valor) {
+        erros++;
+        Serial.print ("ERRO: ");
+        Serial.print (addrFlash, HEX);
+        Serial.print (": ");
+        Serial.print (dado, HEX);
+        Serial.print (" x ");
+        Serial.println (valor, HEX);
+      }
+      digitalWrite (pinBS1, LOW);
+      digitalWrite (pinOE, HIGH);
+      addrFlash++;
+      nLido += 2;
+    }
+  }
+  // Finaliza a operação
+  ATmega_SendCmd(CMD_NOP);
+  if (erros == 0) {
+      Serial.println("Sucesso!");
+  } else {
+    Serial.print(erros);
+    Serial.println(" erros!!!");
+  }
+  return erros == 0;
+}
+
 void ATmega_WriteLFUSE (byte valor) {
   ATmega_WriteFuse (LOW, LOW, valor);
 }
 
 void ATmega_WriteHFUSE (byte valor) {
-  ATmega_WriteFuse (HIGH, HIGH, valor);
+  ATmega_WriteFuse (HIGH, LOW, valor);
 }
 
 void ATmega_WriteEFUSE (byte valor) {
@@ -152,7 +267,26 @@ void ATmega_WriteEFUSE (byte valor) {
 }
 
 void ATmega_WriteLOCK (byte valor) {
-  // TODO
+  // Envia o comando
+  ATmega_SendCmd(CMD_GRAVALOCK);
+  // indica que vai enviar um dado
+  digitalWrite (pinXA0, HIGH);
+  digitalWrite (pinXA1, LOW);
+  // Seleciona low byte
+  digitalWrite (pinBS1, LOW);
+  // Coloca o dado na via de dados
+  PCF8574_Write(valor);
+  // Pulsa XTAL1 para registrar o dado
+  pulsaXTAL1();
+  // Dispara a gravação  
+  digitalWrite (pinWR, LOW);
+  delayMicroseconds(1);
+  digitalWrite (pinWR, HIGH);
+  delayMicroseconds(1);
+  // Aguarda o fim da gravação
+  while (digitalRead(pinRdy) == LOW) {
+    delay(10);
+  }
 }
 
 // Grava um fuse do ATmega

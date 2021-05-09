@@ -1,7 +1,7 @@
 /*
     Definições globais para o ATmegaDetonator
     
-    (C) 2020, Daniel Quadros
+    (C) 2020-201, Daniel Quadros
 */
 
 // Conexões ao ATmega que será gravado
@@ -10,7 +10,7 @@ const int pin12V = 3;
 const int pinOE = 4;
 const int pinWR = 5;
 const int pinBS1 = 6;
-const int pinBS2 =7;
+const int pinBS2 = 7;
 const int pinXA0 = 8;
 const int pinXA1 = 9;
 const int pinPAGEL = 10;
@@ -50,7 +50,6 @@ typedef struct {
   byte fusesFab[4];     // valores de fábrica para LFUSE, HFUSE, EFUSE e LOCK
                         // valor 00 para EFUSE indica que ele não está presente
   char nome[17];        // nome do modelo (terminado por nul)
-  int32_t addrBoot;     // endereço inicial de gravação do bootloader na Flash
   uint8_t pageSize;     // número de words de 16 bits em cada página da Flash
   uint16_t numPages;    // número de páginas na Flash
   byte bootloaders[5];  // indices dos bootloaders aplicaveis (terminado por 0xFF)
@@ -60,5 +59,7 @@ typedef struct {
 typedef struct {
   char nome[17];    // nome do bootloader (terminado por nul)
   byte fuses[4];    // valores para LFUSE, HFUSE, EFUSE e LOCK
+  int16_t addrBoot; // endereço inicial de gravação do bootloader na Flash
   byte addrHi;      // byte mais significativo do endereço do bootloader na EEProm
+  uint16_t tamanho; // tamanho do bootloader
 } BOOTLOADER;
